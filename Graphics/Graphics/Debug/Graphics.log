@@ -1,2 +1,18 @@
-﻿  LINK : C:\Users\User\Documents\year5\AI for computer gaming\AIWarriorGame\Graphics\Debug\Graphics.exe not found or not built by the last incremental link; performing full link
-  Graphics.vcxproj -> C:\Users\User\Documents\year5\AI for computer gaming\AIWarriorGame\Graphics\Debug\Graphics.exe
+﻿  AStar.cpp
+  AttackState.cpp
+  Bullet.cpp
+  DungeonMap.cpp
+  FleeState.cpp
+  GetAmmoState.cpp
+  GetHealedState.cpp
+  Grenade.cpp
+  MedicNPC.cpp
+  NPC.cpp
+  Room.cpp
+  SearchEnemyState.cpp
+  SecurityMap.cpp
+  SupplyNPC.cpp
+  WarriorNPC.cpp
+  main.cpp
+  Generating Code...
+  Graphics.vcxproj -> C:\Users\User\Documents\year5\AI for computer gaming\BaseForCurrentFinalProject\Graphics\Debug\Graphics.exe

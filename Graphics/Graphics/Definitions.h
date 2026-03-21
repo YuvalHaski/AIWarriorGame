@@ -20,8 +20,8 @@
 
 // --- SPEED / TIMING ---
 // Slow everything down so players can follow what is happening
-#define NPC_SPEED            0.30   // grid units per frame
-#define BULLET_SPEED         0.18   // grid units per frame (was 0.5)
+#define NPC_SPEED            0.45   // grid units per frame
+#define BULLET_SPEED         0.28   // grid units per frame
 #define GRENADE_RADIUS       5.0    // explosion radius in grid units
 
 // --- HP / AMMO ---

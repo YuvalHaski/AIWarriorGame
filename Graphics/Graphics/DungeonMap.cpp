@@ -41,7 +41,7 @@ static void DrawLabel(double x, double y, const char* text, void* font = GLUT_BI
         glutBitmapCharacter(font, *p);
 }
 
-// ---- Corridor carving (L-shaped, uniformly 2 cells wide) ----
+// ---- Corridor carving (L-shaped) ----
 static void CarveCell(int r, int c)
 {
     if (r < 0 || r >= MSZ || c < 0 || c >= MSZ) return;
@@ -50,18 +50,20 @@ static void CarveCell(int r, int c)
 
 static void CarveCorridor(int r1, int c1, int r2, int c2)
 {
+    // Choose bend direction to reduce parallel corridors:
+    // alternate between horizontal-first and vertical-first
+    bool horizontalFirst = (std::abs(c2 - c1) >= std::abs(r2 - r1));
+
     int cr = r1, cc = c1;
-    // Horizontal segment
-    while (cc != c2)
+    if (horizontalFirst)
     {
-        CarveCell(cr, cc);
-        cc += (c2 > cc) ? 1 : -1;
+        while (cc != c2) { CarveCell(cr, cc); cc += (c2 > cc) ? 1 : -1; }
+        while (cr != r2) { CarveCell(cr, cc); cr += (r2 > cr) ? 1 : -1; }
     }
-    // Vertical segment
-    while (cr != r2)
+    else
     {
-        CarveCell(cr, cc);
-        cr += (r2 > cr) ? 1 : -1;
+        while (cr != r2) { CarveCell(cr, cc); cr += (r2 > cr) ? 1 : -1; }
+        while (cc != c2) { CarveCell(cr, cc); cc += (c2 > cc) ? 1 : -1; }
     }
     CarveCell(cr, cc);
 }
@@ -151,27 +153,38 @@ void GenerateDungeon()
 
     numRooms = (int)rooms.size();
 
-    // Sort rooms top-to-bottom, left-to-right so the corridor chain
-    // follows a natural geographic path and never doubles back on itself
-    //std::sort(rooms.begin(), rooms.end(), [](const Room& a, const Room& b) {
-    //    if (a.centerRow() != b.centerRow()) return a.centerRow() < b.centerRow();
-    //    return a.centerCol() < b.centerCol();
-    //});
+    // Connect rooms using Prim's MST so each room connects to its nearest
+    // unconnected neighbor, producing clean non-overlapping corridors
+    {
+        std::vector<bool> connected(numRooms, false);
+        connected[0] = true;
+        int edgesAdded = 0;
 
-    //// Connect rooms in a chain (each room connected to the next)
-    //for (int i = 0; i < numRooms - 1; i++)
-    //    CarveCorridor(rooms[i].centerRow(), rooms[i].centerCol(),
-    //                  rooms[i+1].centerRow(), rooms[i+1].centerCol());
+        while (edgesAdded < numRooms - 1)
+        {
+            int bestA = -1, bestB = -1;
+            double bestDist = 1e18;
 
-    std::sort(rooms.begin(), rooms.end(), [](const Room& a, const Room& b) {
-        if (a.centerRow() != b.centerRow()) return a.centerRow() < b.centerRow();
-        return a.centerCol() < b.centerCol();
-        });
+            for (int a = 0; a < numRooms; a++)
+            {
+                if (!connected[a]) continue;
+                for (int b = 0; b < numRooms; b++)
+                {
+                    if (connected[b]) continue;
+                    double dr = rooms[a].centerRow() - rooms[b].centerRow();
+                    double dc = rooms[a].centerCol() - rooms[b].centerCol();
+                    double d  = dr*dr + dc*dc;
+                    if (d < bestDist) { bestDist = d; bestA = a; bestB = b; }
+                }
+            }
 
-    // Connect rooms in a single clean chain
-    for (int i = 0; i < numRooms - 1; i++)
-        CarveCorridor(rooms[i].centerRow(), rooms[i].centerCol(),
-            rooms[i + 1].centerRow(), rooms[i + 1].centerCol());
+            if (bestA < 0) break;
+            connected[bestB] = true;
+            CarveCorridor(rooms[bestA].centerRow(), rooms[bestA].centerCol(),
+                          rooms[bestB].centerRow(), rooms[bestB].centerCol());
+            edgesAdded++;
+        }
+    }
 
     // Place obstacles in each room
     for (const Room& room : rooms)
