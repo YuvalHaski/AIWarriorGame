@@ -58,21 +58,39 @@ static void RoomSpawn(int roomIdx, double& outX, double& outY)
 static void CreateTeam(int team, int startRoomIdx)
 {
     double sx, sy;
+    if (startRoomIdx < 0 || startRoomIdx >= numRooms) return;
+    Room& rm = rooms[startRoomIdx];
+
+    // Clamp helper: keep spawn inside room bounds (1-cell margin from walls)
+    auto clampX = [&](double cx) -> double {
+        double lo = (double)(rm.col + 1) + 0.5;
+        double hi = (double)(rm.col + rm.width - 2) + 0.5;
+        if (cx < lo) cx = lo;
+        if (cx > hi) cx = hi;
+        return cx;
+    };
+    auto clampY = [&](double cy) -> double {
+        double lo = (double)(rm.row + 1) + 0.5;
+        double hi = (double)(rm.row + rm.height - 2) + 0.5;
+        if (cy < lo) cy = lo;
+        if (cy > hi) cy = hi;
+        return cy;
+    };
 
     // Warrior 1
     RoomSpawn(startRoomIdx, sx, sy);
-    allNPCs.push_back(new WarriorNPC(sx,       sy, team));
+    allNPCs.push_back(new WarriorNPC(sx, sy, team));
 
     // Warrior 2 (offset so they don't stack)
     RoomSpawn(startRoomIdx, sx, sy);
-    allNPCs.push_back(new WarriorNPC(sx + 3.0, sy, team));
+    allNPCs.push_back(new WarriorNPC(clampX(sx + 3.0), sy, team));
 
     // Medic
     RoomSpawn(startRoomIdx, sx, sy);
     {
         int dr = (team == TEAM1) ? medDepot1Row : medDepot2Row;
         int dc = (team == TEAM1) ? medDepot1Col : medDepot2Col;
-        allNPCs.push_back(new MedicNPC(sx, sy + 3.0, team, dr, dc));
+        allNPCs.push_back(new MedicNPC(sx, clampY(sy + 3.0), team, dr, dc));
     }
 
     // Supply Soldier
@@ -80,7 +98,7 @@ static void CreateTeam(int team, int startRoomIdx)
     {
         int dr = (team == TEAM1) ? ammoDepot1Row : ammoDepot2Row;
         int dc = (team == TEAM1) ? ammoDepot1Col : ammoDepot2Col;
-        allNPCs.push_back(new SupplyNPC(sx + 3.0, sy + 3.0, team, dr, dc));
+        allNPCs.push_back(new SupplyNPC(clampX(sx + 3.0), clampY(sy + 3.0), team, dr, dc));
     }
 }
 
